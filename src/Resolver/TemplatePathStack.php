@@ -50,14 +50,6 @@ class TemplatePathStack implements ResolverInterface
      */
     protected $lfiProtectionOn = true;
 
-    /**@+
-     * Flags used to determine if a stream wrapper should be used for enabling short tags
-     * @var bool
-     */
-    protected $useViewStream    = false;
-    protected $useStreamWrapper = false;
-    /**@-*/
-
     /**
      * Constructor
      *
@@ -65,13 +57,6 @@ class TemplatePathStack implements ResolverInterface
      */
     public function __construct($options = null)
     {
-        $this->useViewStream = (bool) ini_get('short_open_tag');
-        if ($this->useViewStream) {
-            if (!in_array('zend.view', stream_get_wrappers())) {
-                stream_wrapper_register('zend.view', 'Zend\View\Stream');
-            }
-        }
-
         $this->paths = new SplStack;
         if (null !== $options) {
             $this->setOptions($options);
@@ -101,9 +86,6 @@ class TemplatePathStack implements ResolverInterface
                     break;
                 case 'script_paths':
                     $this->addPaths($value);
-                    break;
-                case 'use_stream_wrapper':
-                    $this->setUseStreamWrapper($value);
                     break;
                 case 'default_suffix':
                     $this->setDefaultSuffix($value);
@@ -250,31 +232,6 @@ class TemplatePathStack implements ResolverInterface
     }
 
     /**
-     * Set flag indicating if stream wrapper should be used if short_open_tag is off
-     *
-     * @param  bool $flag
-     * @return TemplatePathStack
-     */
-    public function setUseStreamWrapper($flag)
-    {
-        $this->useStreamWrapper = (bool) $flag;
-        return $this;
-    }
-
-    /**
-     * Should the stream wrapper be used if short_open_tag is off?
-     *
-     * Returns true if the use_stream_wrapper flag is set, and if short_open_tag
-     * is disabled.
-     *
-     * @return bool
-     */
-    public function useStreamWrapper()
-    {
-        return ($this->useViewStream && $this->useStreamWrapper);
-    }
-
-    /**
      * Retrieve the filesystem path to a view script
      *
      * @param  string $name
@@ -313,10 +270,6 @@ class TemplatePathStack implements ResolverInterface
                     if (!file_exists($filePath)) {
                         break;
                     }
-                }
-                if ($this->useStreamWrapper()) {
-                    // If using a stream wrapper, prepend the spec to the path
-                    $filePath = 'zend.view://' . $filePath;
                 }
                 return $filePath;
             }
